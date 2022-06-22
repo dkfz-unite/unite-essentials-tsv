@@ -14,7 +14,7 @@ namespace Unite.Essentials.Tsv.Tests.Models
 		public const string EnumColumn = "enum_value";
 
 		[Column(StringColumn)]
-		public string? StringValue { get; set; }
+		public string StringValue { get; set; }
 
 		[Column(IntColumn)]
 		public int IntValue { get; set; }
@@ -31,7 +31,7 @@ namespace Unite.Essentials.Tsv.Tests.Models
 		[Column(EnumColumn)]
 		public TestEnum EnumValue { get; set; }
 
-		public string? ShadowValue { get; set; }
+		public string ShadowValue { get; set; }
 
 		public static string TsvHeader()
         {
