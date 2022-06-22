@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ReleaseVersion>1.0.0</ReleaseVersion>
+    <Version>1.0.0</Version>
+    <SynchReleaseVersion>false</SynchReleaseVersion>
+    <RepositoryUrl>https://github.com/dkfz-unite/unite-essentials-tsv</RepositoryUrl>
+    <Authors>Valiantsin Ulasau (DKFZ)</Authors>
+    <Description>TSV utilities package.</Description>
+    <!--<ImplicitUsings>enable</ImplicitUsings>-->
+    <!--<Nullable>enable</Nullable>-->
+  </PropertyGroup>
+
+</Project>
