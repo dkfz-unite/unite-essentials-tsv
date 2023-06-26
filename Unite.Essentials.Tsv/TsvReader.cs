@@ -1,66 +1,161 @@
-﻿using Unite.Essentials.Tsv.Converters;
+﻿using System.Reflection;
+using Unite.Essentials.Tsv.Converters;
 
 namespace Unite.Essentials.Tsv;
 
 public class TsvReader
 {
-    public static IEnumerable<T> Read<T>(string filePath, ClassMap<T> map = null) where T : class
+    /// <summary>
+    /// Reads tsv string and returns collection of objects of type T.
+    /// </summary>
+    /// <typeparam name="T">Model type.</typeparam>
+    /// <param name="tsv">Tsv string.</param>
+    /// <param name="map">Class map.</param>
+    /// <param name="header">Header row is present.</param>
+    /// <returns>Collection of objects of type T.</returns>
+    public static IEnumerable<T> Read<T>(string tsv, ClassMap<T> map = null, bool header = true) where T : class
     {
-        ValidateFilePath(filePath);
+        using var reader = new StringReader(tsv);
 
-        using var reader = new StreamReader(filePath);
-
-        var headerRow = reader.ReadLine();
-        var headerColumns = GetColumnIndices(headerRow);
         var classMap = map ?? new ClassMap<T>().AutoMap();
+        var columnsMap = new Dictionary<string, int>();
+
+        if (header)
+        {
+            var headerRow = reader.ReadLine();
+            var headerColumns = headerRow.Split('\t');
+            columnsMap = GetColumnsMap(headerColumns);
+        }
+        else
+        {
+            columnsMap = GetColumnsMap(classMap);
+        }
+        
+        var dataRow = (string)null;
+
+        while ((dataRow = reader.ReadLine()) != null)
+        {
+            var dataColumns = dataRow.Split('\t');
+            var dataEntry = Activator.CreateInstance<T>();
+            ParseLine(dataColumns, columnsMap, classMap, ref dataEntry);
+
+            yield return dataEntry;
+        }
+    }
+
+    /// <summary>
+    /// Reads tsv stream and returns collection of objects of type T.
+    /// </summary>
+    /// <typeparam name="T">Model type.</typeparam>
+    /// <param name="stream">Tsv stream.</param>
+    /// <param name="map">Class map.</param>
+    /// <param name="header">Header row is present.</param>
+    /// <returns>Collection of objects of type T.</returns>
+    public static IEnumerable<T> Read<T>(StreamReader reader, ClassMap<T> map = null, bool header = true) where T : class
+    {
+        var classMap = map ?? new ClassMap<T>().AutoMap();
+        var columnsMap = new Dictionary<string, int>();
+        
+        if (header)
+        {
+            var headerRow = reader.ReadLine();
+            var headerColumns = headerRow.Split('\t');
+            columnsMap = GetColumnsMap(headerColumns);
+        }
+        else
+        {
+            columnsMap = GetColumnsMap(classMap);
+        }
 
         while (!reader.EndOfStream)
         {
             var dataRow = reader.ReadLine();
             var dataColumns = dataRow.Split('\t');
             var dataEntry = Activator.CreateInstance<T>();
-
-            foreach (var columnMap in classMap.Columns)
-            {
-                var rawValue = headerColumns.ContainsKey(columnMap.Name) ? dataColumns[headerColumns[columnMap.Name]] : null;
-                var convertedValue = Converter.Convert(rawValue, columnMap.Property);
-                columnMap.SetValue(dataEntry, convertedValue);
-            }
+            ParseLine(dataColumns, columnsMap, classMap, ref dataEntry);
 
             yield return dataEntry;
         }
     }
 
-    public static IEnumerable<T> Read<T>(Stream stream, ClassMap<T> map = null) where T : class
+
+    private static void ParseLine<T>(string[] columns, IDictionary<string, int> columnsMap, ClassMap<T> classMap, ref T dataEntry) where T : class
     {
-        using var reader = new StreamReader(stream);
-
-        var headerRow = reader.ReadLine();
-        var headerColumns = GetColumnIndices(headerRow);
-        var classMap = map ?? new ClassMap<T>().AutoMap();
-
-        while (!reader.EndOfStream)
+        foreach (var propertyMap in classMap.Properties)
         {
-            var dataRow = reader.ReadLine();
-            var dataColumns = dataRow.Split('\t');
-            var dataEntry = Activator.CreateInstance<T>();
+            var columnIndex = propertyMap.ColumnName != null 
+                ? columnsMap.ContainsKey(propertyMap.ColumnName) ? columnsMap[propertyMap.ColumnName] : -1
+                : columnsMap.ContainsKey(propertyMap.PropertyName) ? columnsMap[propertyMap.PropertyName] : -1;
 
-            foreach (var columnMap in classMap.Columns)
+            if (columnIndex < 0)
             {
-                var rawValue = headerColumns.ContainsKey(columnMap.Name) ? dataColumns[headerColumns[columnMap.Name]] : null;
-                var convertedValue = Converter.Convert(rawValue, columnMap.Property);
-                columnMap.SetValue(dataEntry, convertedValue);
+                continue;
+                // throw new Exception($"Column '{propertyMap.Name ?? propertyMap.PropertyName}' not found.");
             }
 
-            yield return dataEntry;
+            if (columnIndex >= columns.Length)
+            {
+                continue;
+                // throw new Exception($"Column '{propertyMap.Name ?? propertyMap.PropertyName}' index is greater than columns number.");
+            }
+
+            var rawValue = columns[columnIndex];
+
+            if (string.IsNullOrWhiteSpace(rawValue))
+            {
+                continue;
+            }
+            else
+            {
+                if (propertyMap.Converter != null)
+                {
+                    var convertedValue = propertyMap.Converter.Convert(rawValue);
+                    SetValue(propertyMap.PropertyPath, dataEntry, convertedValue);
+                }
+                else if (propertyMap.PropertyType.IsEnum)
+                {
+                    var convertedValue = EnumMemberConverter.Convert(rawValue, propertyMap.PropertyType);
+                    SetValue(propertyMap.PropertyPath, dataEntry, convertedValue);
+                }
+                else
+                {
+                    var convertedValue = BaseTypeConverter.Convert(rawValue, propertyMap.PropertyType);
+                    SetValue(propertyMap.PropertyPath, dataEntry, convertedValue);
+                }
+            }
         }
     }
 
-
-    private static Dictionary<string, int> GetColumnIndices(string header)
+    private static void SetValue(IEnumerable<MemberInfo> path, object entry, object value)
     {
-        var columns = header.Split('\t');
+        if (value == null)
+        {
+            return;
+        }
 
+        if (path.Count() == 1)
+        {
+            var property = (PropertyInfo)path.First();
+            property.SetValue(entry, value);
+        }
+        else
+        {
+            var property = (PropertyInfo)path.First();
+            var subEntry = property.GetValue(entry);
+
+            if (subEntry == null)
+            {
+                subEntry = Activator.CreateInstance(property.PropertyType);
+                property.SetValue(entry, subEntry);
+            }
+
+            var remainingPath = path.Skip(1);
+            SetValue(remainingPath, subEntry, value);
+        }
+    }
+
+    private static Dictionary<string, int> GetColumnsMap(string[] columns)
+    {
         var columnsMap = new Dictionary<string, int>();
 
         for (var i = 0; i < columns.Length; i++)
@@ -71,16 +166,17 @@ public class TsvReader
         return columnsMap;
     }
 
-    private static void ValidateFilePath(string filePath)
+    private static Dictionary<string, int> GetColumnsMap<T>(ClassMap<T> classMap) where T : class
     {
-        if (string.IsNullOrWhiteSpace(filePath))
+        var properties = classMap.Properties.ToArray();
+
+        var columnsMap = new Dictionary<string, int>();
+        
+        for (var i = 0; i < properties.Length; i++)
         {
-            throw new ArgumentNullException(nameof(filePath), "File path has to be set");
+            columnsMap.Add(properties[i].ColumnName ?? properties[i].PropertyName, i);
         }
 
-        if (!File.Exists(filePath))
-        {
-            throw new FileNotFoundException("File does not exist or is not accessible", filePath);
-        }
+        return columnsMap;
     }
 }

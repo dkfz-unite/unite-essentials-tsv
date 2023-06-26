@@ -1,39 +1,22 @@
 ﻿using System.Linq.Expressions;
 using System.Reflection;
 using Unite.Essentials.Tsv.Attributes;
+using Unite.Essentials.Tsv.Converters;
 
 namespace Unite.Essentials.Tsv;
 
 public class ClassMap<T> where T : class
 {
-    private List<ColumnMap<T>> _columns;
+    private List<PropertyMap> _properties;
 
-    public IEnumerable<ColumnMap<T>> Columns => _columns;
+    public IEnumerable<PropertyMap> Properties => _properties;
 
 
     public ClassMap()
     {
-        _columns = new List<ColumnMap<T>>();
+        _properties = new List<PropertyMap>();
     }
 
-    public ClassMap(IEnumerable<ColumnMap<T>> columns)
-    {
-        _columns = columns.ToList();
-    }
-
-    public ClassMap<T> Map(PropertyInfo property, string name = null, int? index = null)
-    {
-        _columns.Add(new ColumnMap<T>(property, name, index));
-
-        return this;
-    }
-
-    public ClassMap<T> Map<TProp>(Expression<Func<T, TProp>> property, string name = null, int? index = null)
-    {
-        _columns.Add(new ColumnMap<T, TProp>(property, name, index));
-
-        return this;
-    }
 
     public ClassMap<T> AutoMap()
     {
@@ -48,6 +31,77 @@ public class ClassMap<T> where T : class
         else
         {
             AutoMapByProperties(properties);
+        }
+
+        return this;
+    }
+
+    public ClassMap<T> Map<TProp>(Expression<Func<T, TProp>> property, string columnName = null, IConverter<TProp> converter = null)
+    {
+        var newMap = PropertyMap.Create(property, columnName, converter);
+
+        var existingMap = _properties.FirstOrDefault(map => map.PropertyName == newMap.PropertyName);
+
+        if (existingMap != null)
+        {
+            existingMap.ColumnName = newMap.ColumnName;
+            existingMap.Converter = newMap.Converter;
+        }
+        else
+        {
+            _properties.Add(newMap);
+        }
+
+        return this;
+    }
+
+    public ClassMap<T> Ignore<TProp>(Expression<Func<T, TProp>> property, string columnName = null)
+    {
+        var newMap = PropertyMap.Create(property, columnName);
+
+        var existingMap = _properties.FirstOrDefault(map => map.PropertyName == newMap.PropertyName);
+
+        if (existingMap != null)
+        {
+            _properties.Remove(existingMap);
+        }
+
+        return this;
+    }
+
+    public ClassMap<T> Nest<TProp>(Expression<Func<T, TProp>> property)
+    {
+        var newMap = PropertyMap.Nest(property);
+
+        var existingMap = _properties.FirstOrDefault(map => map.PropertyName == newMap.PropertyName);
+
+        if (existingMap != null)
+        {
+            existingMap.IsNested = true;
+        }
+        else
+        {
+            _properties.Add(newMap);
+        }
+
+        return this;
+    }
+
+
+    private ClassMap<T> Map(PropertyInfo property, string columnName = null, IConverter converter = null)
+    {
+        var newMap = PropertyMap.Create(property, columnName, converter);
+    
+        var existingMap = _properties.FirstOrDefault(map => map.PropertyName == newMap.PropertyName);
+
+        if (existingMap != null)
+        {
+            existingMap.ColumnName = newMap.ColumnName;
+            existingMap.Converter = newMap.Converter;
+        }
+        else
+        {
+            _properties.Add(newMap);
         }
 
         return this;
@@ -69,7 +123,7 @@ public class ClassMap<T> where T : class
 
             if (columnAttribute != null)
             {
-                Map(property, columnAttribute.Name, columnAttribute.Index);
+                Map(property, columnAttribute.Name, columnAttribute.Converter);
             }
         }
     }
