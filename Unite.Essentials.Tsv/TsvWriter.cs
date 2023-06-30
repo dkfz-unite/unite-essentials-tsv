@@ -64,7 +64,7 @@ public class TsvWriter
                 {
                     if (propertyMap.Converter != null)
                     {
-                        return propertyMap.Converter.Convert(rawValue);
+                        return propertyMap.Converter.Convert(rawValue, row);
                     }
                     else if (propertyMap.PropertyType.IsEnum)
                     {

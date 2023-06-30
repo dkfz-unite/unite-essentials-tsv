@@ -23,8 +23,7 @@ public class TsvReader
         if (header)
         {
             var headerRow = reader.ReadLine();
-            var headerColumns = headerRow.Split('\t');
-            columnsMap = GetColumnsMap(headerColumns);
+            columnsMap = GetColumnsMap(headerRow);
         }
         else
         {
@@ -35,9 +34,8 @@ public class TsvReader
 
         while ((dataRow = reader.ReadLine()) != null)
         {
-            var dataColumns = dataRow.Split('\t');
             var dataEntry = Activator.CreateInstance<T>();
-            ParseLine(dataColumns, columnsMap, classMap, ref dataEntry);
+            ParseLine(dataRow, columnsMap, classMap, ref dataEntry);
 
             yield return dataEntry;
         }
@@ -59,8 +57,7 @@ public class TsvReader
         if (header)
         {
             var headerRow = reader.ReadLine();
-            var headerColumns = headerRow.Split('\t');
-            columnsMap = GetColumnsMap(headerColumns);
+            columnsMap = GetColumnsMap(headerRow);
         }
         else
         {
@@ -70,17 +67,18 @@ public class TsvReader
         while (!reader.EndOfStream)
         {
             var dataRow = reader.ReadLine();
-            var dataColumns = dataRow.Split('\t');
             var dataEntry = Activator.CreateInstance<T>();
-            ParseLine(dataColumns, columnsMap, classMap, ref dataEntry);
+            ParseLine(dataRow, columnsMap, classMap, ref dataEntry);
 
             yield return dataEntry;
         }
     }
 
 
-    private static void ParseLine<T>(string[] columns, IDictionary<string, int> columnsMap, ClassMap<T> classMap, ref T dataEntry) where T : class
+    private static void ParseLine<T>(string dataRow, IDictionary<string, int> columnsMap, ClassMap<T> classMap, ref T dataEntry) where T : class
     {
+        var columns = dataRow.Split('\t');
+
         foreach (var propertyMap in classMap.Properties)
         {
             var columnIndex = propertyMap.ColumnName != null 
@@ -109,7 +107,7 @@ public class TsvReader
             {
                 if (propertyMap.Converter != null)
                 {
-                    var convertedValue = propertyMap.Converter.Convert(rawValue);
+                    var convertedValue = propertyMap.Converter.Convert(rawValue, dataRow);
                     SetValue(propertyMap.PropertyPath, dataEntry, convertedValue);
                 }
                 else if (propertyMap.PropertyType.IsEnum)
@@ -154,8 +152,9 @@ public class TsvReader
         }
     }
 
-    private static Dictionary<string, int> GetColumnsMap(string[] columns)
+    private static Dictionary<string, int> GetColumnsMap(string row)
     {
+        var columns = row.Split('\t');
         var columnsMap = new Dictionary<string, int>();
 
         for (var i = 0; i < columns.Length; i++)
