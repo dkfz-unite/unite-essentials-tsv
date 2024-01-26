@@ -2,8 +2,8 @@
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
-    <ReleaseVersion>4.0.0</ReleaseVersion>
-    <Version>4.0.0</Version>
+    <ReleaseVersion>4.1.0</ReleaseVersion>
+    <Version>4.1.0</Version>
     <SynchReleaseVersion>false</SynchReleaseVersion>
     <RepositoryUrl>https://github.com/dkfz-unite/unite-essentials-tsv</RepositoryUrl>
     <Authors>Valiantsin Ulasau (DKFZ)</Authors>

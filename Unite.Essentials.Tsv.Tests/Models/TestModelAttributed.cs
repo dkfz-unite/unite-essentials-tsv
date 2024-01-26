@@ -10,6 +10,8 @@ public class TestModelAttributed : TestModel
     public const string CharColum = "char_value";
     public const string BoolColumn = "bool_value";
     public const string DateColumn = "date_value";
+    public const string DateOnlyColumn = "date_only_value";
+    public const string TimeOnlyColumn = "time_only_value";
     public const string ByteColumn = "byte_value";
     public const string UshortColumn = "ushort_value";
     public const string UintColumn = "uint_value";
@@ -36,6 +38,12 @@ public class TestModelAttributed : TestModel
 
     [Column(DateColumn)]
     public override DateTime? DateValue { get; set; }
+
+    [Column(DateOnlyColumn)]
+    public override DateOnly? DateOnlyValue { get; set; }
+
+    [Column(TimeOnlyColumn)]
+    public override TimeOnly? TimeOnlyValue { get; set; }
 
     [Column(ByteColumn)]
     public override byte? ByteValue { get; set; }
@@ -81,7 +89,8 @@ public class TestModelAttributed : TestModel
     public static string TsvHeader()
     {
         return string.Join('\t', 
-            StringColumn, CharColum, BoolColumn, DateColumn, 
+            StringColumn, CharColum, BoolColumn,
+            DateColumn, DateOnlyColumn, TimeOnlyColumn, 
             ByteColumn, UshortColumn, UintColumn, UlongColumn, 
             SbyteColumn, ShortColumn, IntColumn, LongColumn, 
             DecimalColumn, DoubleColumn, FloatColumn, 

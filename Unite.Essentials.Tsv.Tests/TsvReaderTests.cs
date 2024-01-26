@@ -14,8 +14,8 @@ public class TsvReaderTests
     {
         var tsv = new StringBuilder();
         tsv.AppendLine(TestModelAttributed.TsvHeader());
-        tsv.AppendLine(string.Join('\t', "string", "c", "true", "2022-01-10 10:00:00", "255", "65535", "65536", "65537", "-128", "-32768", "-32769", "-32770", "65540", "1.79E+308", "3.4028E+38", "A"));
-        tsv.AppendLine(string.Join('\t', "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""));
+        tsv.AppendLine(string.Join('\t', "string", "c", "true", "2022-01-10 10:00:00", "2022-01-10", "10:00:00", "255", "65535", "65536", "65537", "-128", "-32768", "-32769", "-32770", "65540", "1.79E+308", "3.4028E+38", "A"));
+        tsv.AppendLine(string.Join('\t', "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""));
 
         using var stream = PrepareStream(tsv.ToString());
         using var reader = new StreamReader(stream);
@@ -30,8 +30,8 @@ public class TsvReaderTests
     public void ShoulReadByAttributesWithoutHeader()
     {
         var tsv = new StringBuilder();
-        tsv.AppendLine(string.Join('\t', "string", "c", "true", "2022-01-10 10:00:00", "255", "65535", "65536", "65537", "-128", "-32768", "-32769", "-32770", "65540", "1.79E+308", "3.4028E+38", "A"));
-        tsv.AppendLine(string.Join('\t', "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""));
+        tsv.AppendLine(string.Join('\t', "string", "c", "true", "2022-01-10 10:00:00", "2022-01-10", "10:00:00", "255", "65535", "65536", "65537", "-128", "-32768", "-32769", "-32770", "65540", "1.79E+308", "3.4028E+38", "A"));
+        tsv.AppendLine(string.Join('\t', "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""));
 
         var models = TsvReader.Read<TestModelAttributed>(tsv.ToString(), header: false).ToArray();
         Assert.AreEqual(2, models.Length);
@@ -43,9 +43,9 @@ public class TsvReaderTests
     public void ShoulReadByProperties()
     {
         var tsv = new StringBuilder();
-        tsv.AppendLine(string.Join('\t', "StringValue", "CharValue", "BoolValue", "DateValue", "ByteValue", "UShortValue", "UIntValue", "ULongValue", "SByteValue", "ShortValue", "IntValue", "LongValue", "DecimalValue", "DoubleValue", "FloatValue", "EnumValue"));
-        tsv.AppendLine(string.Join('\t', "string", "c", "true", "2022-01-10 10:00:00", "255", "65535", "65536", "65537", "-128", "-32768", "-32769", "-32770", "65540", "1.79E+308", "3.4028E+38", "A"));
-        tsv.AppendLine(string.Join('\t', "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""));
+        tsv.AppendLine(string.Join('\t', "StringValue", "CharValue", "BoolValue", "DateValue", "DateOnlyValue", "TimeOnlyValue", "ByteValue", "UShortValue", "UIntValue", "ULongValue", "SByteValue", "ShortValue", "IntValue", "LongValue", "DecimalValue", "DoubleValue", "FloatValue", "EnumValue"));
+        tsv.AppendLine(string.Join('\t', "string", "c", "true", "2022-01-10 10:00:00", "2022-01-10", "10:00:00", "255", "65535", "65536", "65537", "-128", "-32768", "-32769", "-32770", "65540", "1.79E+308", "3.4028E+38", "A"));
+        tsv.AppendLine(string.Join('\t', "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""));
 
         using var stream = PrepareStream(tsv.ToString());
         using var reader = new StreamReader(stream);
@@ -60,8 +60,8 @@ public class TsvReaderTests
     public void ShoulReadByPropertiesWithoutHeader()
     {
         var tsv = new StringBuilder();
-        tsv.AppendLine(string.Join('\t', "string", "c", "true", "2022-01-10 10:00:00", "255", "65535", "65536", "65537", "-128", "-32768", "-32769", "-32770", "65540", "1.79E+308", "3.4028E+38", "A"));
-        tsv.AppendLine(string.Join('\t', "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""));
+        tsv.AppendLine(string.Join('\t', "string", "c", "true", "2022-01-10 10:00:00", "2022-01-10", "10:00:00", "255", "65535", "65536", "65537", "-128", "-32768", "-32769", "-32770", "65540", "1.79E+308", "3.4028E+38", "A"));
+        tsv.AppendLine(string.Join('\t', "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""));
 
         var models = TsvReader.Read<TestModel>(tsv.ToString(), header: false).ToArray();
         Assert.AreEqual(2, models.Length);
@@ -200,6 +200,8 @@ public class TsvReaderTests
         Assert.AreEqual('c', line.CharValue);
         Assert.AreEqual(true, line.BoolValue);
         Assert.AreEqual(new DateTime(2022, 1, 10, 10, 0, 0), line.DateValue);
+        Assert.AreEqual(new DateOnly(2022, 1, 10), line.DateOnlyValue);
+        Assert.AreEqual(new TimeOnly(10, 0, 0), line.TimeOnlyValue);
         Assert.AreEqual((byte)255, line.ByteValue);
         Assert.AreEqual((ushort)65535, line.UShortValue);
         Assert.AreEqual((uint)65536, line.UIntValue);
@@ -220,6 +222,8 @@ public class TsvReaderTests
         Assert.AreEqual(null, line.CharValue);
         Assert.AreEqual(null, line.BoolValue);
         Assert.AreEqual(null, line.DateValue);
+        Assert.AreEqual(null, line.DateOnlyValue);
+        Assert.AreEqual(null, line.TimeOnlyValue);
         Assert.AreEqual(null, line.ByteValue);
         Assert.AreEqual(null, line.UShortValue);
         Assert.AreEqual(null, line.UIntValue);

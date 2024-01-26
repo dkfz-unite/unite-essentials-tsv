@@ -21,6 +21,8 @@ public class TsvWriterTests
                 CharValue = 'c',
                 BoolValue = true,
                 DateValue = new DateTime(2022, 1, 10, 10, 0, 0),
+                DateOnlyValue = new DateOnly(2022, 1, 10),
+                TimeOnlyValue = new TimeOnly(10, 0, 0),
                 ByteValue = 255,
                 UShortValue = 65535,
                 UIntValue = 65536,
@@ -54,8 +56,8 @@ public class TsvWriterTests
         var tsv = reader.ReadToEnd().Split('\n');
 
         Assert.AreEqual(TestModelAttributed.TsvHeader(), tsv[0]);
-        Assert.AreEqual(string.Join('\t', "string", "c", "True", "01/10/2022 10:00:00", "255", "65535", "65536", "65537", "-128", "-32768", "-32769", "-32770", "65540", "1.79E+308", "3.4028E+38", "A", "[1,2,3]"), tsv[1]);
-        Assert.AreEqual(string.Join('\t', "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""), tsv[2]);
+        Assert.AreEqual(string.Join('\t', "string", "c", "True", "01/10/2022 10:00:00", "01/10/2022", "10:00", "255", "65535", "65536", "65537", "-128", "-32768", "-32769", "-32770", "65540", "1.79E+308", "3.4028E+38", "A", "[1,2,3]"), tsv[1]);
+        Assert.AreEqual(string.Join('\t', "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""), tsv[2]);
     }
 
     [TestMethod]
@@ -63,8 +65,8 @@ public class TsvWriterTests
     {
         var tsv = TsvWriter.Write<TestModelAttributed>(_models, header: false).Split('\n');
 
-        Assert.AreEqual(string.Join('\t', "string", "c", "True", "01/10/2022 10:00:00", "255", "65535", "65536", "65537", "-128", "-32768", "-32769", "-32770", "65540", "1.79E+308", "3.4028E+38", "A", "[1,2,3]"), tsv[0]);
-        Assert.AreEqual(string.Join('\t', "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""), tsv[1]);
+        Assert.AreEqual(string.Join('\t', "string", "c", "True", "01/10/2022 10:00:00", "01/10/2022", "10:00", "255", "65535", "65536", "65537", "-128", "-32768", "-32769", "-32770", "65540", "1.79E+308", "3.4028E+38", "A", "[1,2,3]"), tsv[0]);
+        Assert.AreEqual(string.Join('\t', "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""), tsv[1]);
     }
 
     [TestMethod]
@@ -77,9 +79,9 @@ public class TsvWriterTests
         using var reader = new StreamReader(stream);
         var tsv = reader.ReadToEnd().Split('\n');
 
-        Assert.AreEqual(string.Join('\t', "StringValue", "CharValue", "BoolValue", "DateValue", "ByteValue", "UShortValue", "UIntValue", "ULongValue", "SByteValue", "ShortValue", "IntValue", "LongValue", "DecimalValue", "DoubleValue", "FloatValue", "EnumValue", "ArrayValue"), tsv[0]);
-        Assert.AreEqual(string.Join('\t', "string", "c", "True", "01/10/2022 10:00:00", "255", "65535", "65536", "65537", "-128", "-32768", "-32769", "-32770", "65540", "1.79E+308", "3.4028E+38", "A", ""), tsv[1]);
-        Assert.AreEqual(string.Join('\t', "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""), tsv[2]);
+        Assert.AreEqual(string.Join('\t', "StringValue", "CharValue", "BoolValue", "DateValue", "DateOnlyValue", "TimeOnlyValue", "ByteValue", "UShortValue", "UIntValue", "ULongValue", "SByteValue", "ShortValue", "IntValue", "LongValue", "DecimalValue", "DoubleValue", "FloatValue", "EnumValue", "ArrayValue"), tsv[0]);
+        Assert.AreEqual(string.Join('\t', "string", "c", "True", "01/10/2022 10:00:00", "01/10/2022", "10:00", "255", "65535", "65536", "65537", "-128", "-32768", "-32769", "-32770", "65540", "1.79E+308", "3.4028E+38", "A", ""), tsv[1]);
+        Assert.AreEqual(string.Join('\t', "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""), tsv[2]);
     }
 
     [TestMethod]
@@ -87,8 +89,8 @@ public class TsvWriterTests
     {
         var tsv = TsvWriter.Write<TestModel>(_models, header: false).Split('\n');
 
-        Assert.AreEqual(string.Join('\t', "string", "c", "True", "01/10/2022 10:00:00", "255", "65535", "65536", "65537", "-128", "-32768", "-32769", "-32770", "65540", "1.79E+308", "3.4028E+38", "A", ""), tsv[0]);
-        Assert.AreEqual(string.Join('\t', "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""), tsv[1]);
+        Assert.AreEqual(string.Join('\t', "string", "c", "True", "01/10/2022 10:00:00", "01/10/2022", "10:00", "255", "65535", "65536", "65537", "-128", "-32768", "-32769", "-32770", "65540", "1.79E+308", "3.4028E+38", "A", ""), tsv[0]);
+        Assert.AreEqual(string.Join('\t', "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""), tsv[1]);
     }
 
     [TestMethod]
@@ -164,9 +166,9 @@ public class TsvWriterTests
 
         var tsv = TsvWriter.Write<TestModel>(_models, map).Split('\n');
 
-        Assert.AreEqual(string.Join('\t', "string_value", "char_value", "bool_value", "date_value", "ByteValue", "UShortValue", "UIntValue", "ULongValue", "SByteValue", "ShortValue", "IntValue", "LongValue", "DecimalValue", "DoubleValue", "FloatValue", "array_value"), tsv[0]);
-        Assert.AreEqual(string.Join('\t', "string", "c", "True", "01/10/2022 10:00:00", "255", "65535", "65536", "65537", "-128", "-32768", "-32769", "-32770", "65540", "1.79E+308", "3.4028E+38", "[1,2,3]"), tsv[1]);
-        Assert.AreEqual(string.Join('\t', "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""), tsv[2]);
+        Assert.AreEqual(string.Join('\t', "string_value", "char_value", "bool_value", "date_value", "DateOnlyValue", "TimeOnlyValue", "ByteValue", "UShortValue", "UIntValue", "ULongValue", "SByteValue", "ShortValue", "IntValue", "LongValue", "DecimalValue", "DoubleValue", "FloatValue", "array_value"), tsv[0]);
+        Assert.AreEqual(string.Join('\t', "string", "c", "True", "01/10/2022 10:00:00", "01/10/2022", "10:00", "255", "65535", "65536", "65537", "-128", "-32768", "-32769", "-32770", "65540", "1.79E+308", "3.4028E+38", "[1,2,3]"), tsv[1]);
+        Assert.AreEqual(string.Join('\t', "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""), tsv[2]);
     }
 
     [TestMethod]

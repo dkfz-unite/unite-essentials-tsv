@@ -8,6 +8,8 @@ public class TestModel
     public virtual char? CharValue { get; set; }
     public virtual bool? BoolValue { get; set; }
     public virtual DateTime? DateValue { get; set; }
+    public virtual DateOnly? DateOnlyValue { get; set; }
+    public virtual TimeOnly? TimeOnlyValue { get; set; }
     public virtual byte? ByteValue { get; set; }
     public virtual ushort? UShortValue { get; set; }
     public virtual uint? UIntValue { get; set; }
