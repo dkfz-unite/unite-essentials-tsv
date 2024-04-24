@@ -12,32 +12,45 @@ public class TsvReader
     /// <param name="tsv">Tsv string.</param>
     /// <param name="map">Class map.</param>
     /// <param name="header">Header row is present.</param>
+    /// <param name="comments">List to cellect comments to (ignored if null).</param>
     /// <returns>Collection of objects of type T.</returns>
-    public static IEnumerable<T> Read<T>(string tsv, ClassMap<T> map = null, bool header = true) where T : class
+    public static IEnumerable<T> Read<T>(string tsv, ClassMap<T> map = null, bool header = true, IList<string> comments = null) where T : class
     {
         using var reader = new StringReader(tsv);
 
+        var readComments = true;
+        var readHeader = header;
         var classMap = map ?? new ClassMap<T>().AutoMap();
-        var columnsMap = new Dictionary<string, int>();
+        var columnsMap = GetColumnsMap(classMap);
 
-        if (header)
+        while (reader.Peek() != -1)
         {
-            var headerRow = reader.ReadLine();
-            columnsMap = GetColumnsMap(headerRow);
-        }
-        else
-        {
-            columnsMap = GetColumnsMap(classMap);
-        }
-        
-        var dataRow = (string)null;
+            var line = reader.ReadLine();
 
-        while ((dataRow = reader.ReadLine()) != null)
-        {
-            var dataEntry = Activator.CreateInstance<T>();
-            ParseLine(dataRow, columnsMap, classMap, ref dataEntry);
+            if (readComments)
+            {
+                if (line.StartsWith("#"))
+                {
+                    comments?.Add(line.TrimStart('#'));
+                    continue;
+                }
+                else
+                {
+                    readComments = false;
+                }
+            }
 
-            yield return dataEntry;
+            if (readHeader)
+            {
+                columnsMap = GetColumnsMap(line);
+                readHeader = false;
+                continue;
+            }
+            
+            var entry = Activator.CreateInstance<T>();
+            ParseLine(line, columnsMap, classMap, ref entry);
+
+            yield return entry;
         }
     }
 
@@ -48,29 +61,43 @@ public class TsvReader
     /// <param name="stream">Tsv stream.</param>
     /// <param name="map">Class map.</param>
     /// <param name="header">Header row is present.</param>
+    /// <param name="comments">List to cellect comments to (ignored if null).</param>
     /// <returns>Collection of objects of type T.</returns>
-    public static IEnumerable<T> Read<T>(StreamReader reader, ClassMap<T> map = null, bool header = true) where T : class
+    public static IEnumerable<T> Read<T>(StreamReader reader, ClassMap<T> map = null, bool header = true, IList<string> comments = null) where T : class
     {
+        var readComments = true;
+        var readHeader = header;
         var classMap = map ?? new ClassMap<T>().AutoMap();
-        var columnsMap = new Dictionary<string, int>();
-        
-        if (header)
-        {
-            var headerRow = reader.ReadLine();
-            columnsMap = GetColumnsMap(headerRow);
-        }
-        else
-        {
-            columnsMap = GetColumnsMap(classMap);
-        }
+        var columnsMap = GetColumnsMap(classMap);
 
         while (!reader.EndOfStream)
         {
-            var dataRow = reader.ReadLine();
-            var dataEntry = Activator.CreateInstance<T>();
-            ParseLine(dataRow, columnsMap, classMap, ref dataEntry);
+            var line = reader.ReadLine();
 
-            yield return dataEntry;
+            if (readComments)
+            {
+                if (line.StartsWith("#"))
+                {
+                    comments?.Add(line.TrimStart('#'));
+                    continue;
+                }
+                else
+                {
+                    readComments = false;
+                }
+            }
+
+            if (readHeader)
+            {
+                columnsMap = GetColumnsMap(line);
+                readHeader = false;
+                continue;
+            }
+
+            var entry = Activator.CreateInstance<T>();
+            ParseLine(line, columnsMap, classMap, ref entry);
+
+            yield return entry;
         }
     }
 

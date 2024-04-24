@@ -12,14 +12,15 @@ public class TsvWriter
     /// <param name="rows">Rows to write.</param>
     /// <param name="map">Class map.</param>
     /// <param name="header">Include header row.</param>
+    /// <param name="comments">Comments to include.</param>
     /// <returns>Tsv string.</returns>
-    public static string Write<T>(IEnumerable<T> rows, ClassMap<T> map = null, bool header = true) where T : class
+    public static string Write<T>(IEnumerable<T> rows, ClassMap<T> map = null, bool header = true, IEnumerable<string> comments = null) where T : class
     {
         using var stream = new MemoryStream();
 
         using (var writer = new StreamWriter(stream, leaveOpen: true))
         {
-            Write(writer, rows, map, header);
+            Write(writer, rows, map, header, comments);
         }
 
         stream.Position = 0;
@@ -38,10 +39,18 @@ public class TsvWriter
     /// <param name="rows">Rows to write.</param>
     /// <param name="map">Class map.</param>
     /// <param name="header">Include header row.</param>
-    public static void Write<T>(StreamWriter streamWriter, IEnumerable<T> rows, ClassMap<T> map = null, bool header = true) where T : class
+    public static void Write<T>(StreamWriter streamWriter, IEnumerable<T> rows, ClassMap<T> map = null, bool header = true, IEnumerable<string> comments = null) where T : class
     {
         var classMap = map ?? new ClassMap<T>().AutoMap();
         var properties = classMap.Properties.Where(propertyMap => !propertyMap.IsNested);
+
+        if (comments != null)
+        {
+            foreach (var comment in comments)
+            {
+                streamWriter.WriteLine($"#{comment}");
+            }
+        }
 
         if (header)
         {

@@ -13,6 +13,8 @@ public class TsvReaderTests
     public void ShoulReadByAttributes()
     {
         var tsv = new StringBuilder();
+        tsv.AppendLine("#comment1");
+        tsv.AppendLine("#comment2");
         tsv.AppendLine(TestModelAttributed.TsvHeader());
         tsv.AppendLine(string.Join('\t', "string", "c", "true", "2022-01-10 10:00:00", "2022-01-10", "10:00:00", "255", "65535", "65536", "65537", "-128", "-32768", "-32769", "-32770", "65540", "1.79E+308", "3.4028E+38", "A"));
         tsv.AppendLine(string.Join('\t', "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""));
@@ -20,7 +22,11 @@ public class TsvReaderTests
         using var stream = PrepareStream(tsv.ToString());
         using var reader = new StreamReader(stream);
 
-        var models = TsvReader.Read<TestModelAttributed>(reader).ToArray();
+        var comments = new List<string>();
+        var models = TsvReader.Read<TestModelAttributed>(reader, comments: comments).ToArray();
+        Assert.AreEqual(2, comments.Count);
+        Assert.AreEqual("comment1", comments[0]);
+        Assert.AreEqual("comment2", comments[1]);
         Assert.AreEqual(2, models.Length);
         AssertDataLine(models[0]);
         AssertEmptyLine(models[1]);
@@ -43,6 +49,8 @@ public class TsvReaderTests
     public void ShoulReadByProperties()
     {
         var tsv = new StringBuilder();
+        tsv.AppendLine("#comment1");
+        tsv.AppendLine("#comment2");
         tsv.AppendLine(string.Join('\t', "StringValue", "CharValue", "BoolValue", "DateValue", "DateOnlyValue", "TimeOnlyValue", "ByteValue", "UShortValue", "UIntValue", "ULongValue", "SByteValue", "ShortValue", "IntValue", "LongValue", "DecimalValue", "DoubleValue", "FloatValue", "EnumValue"));
         tsv.AppendLine(string.Join('\t', "string", "c", "true", "2022-01-10 10:00:00", "2022-01-10", "10:00:00", "255", "65535", "65536", "65537", "-128", "-32768", "-32769", "-32770", "65540", "1.79E+308", "3.4028E+38", "A"));
         tsv.AppendLine(string.Join('\t', "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""));
@@ -50,7 +58,11 @@ public class TsvReaderTests
         using var stream = PrepareStream(tsv.ToString());
         using var reader = new StreamReader(stream);
 
-        var models = TsvReader.Read<TestModel>(reader).ToArray();
+        var comments = new List<string>();
+        var models = TsvReader.Read<TestModel>(reader, comments: comments).ToArray();
+        Assert.AreEqual(2, comments.Count);
+        Assert.AreEqual("comment1", comments[0]);
+        Assert.AreEqual("comment2", comments[1]);
         Assert.AreEqual(2, models.Length);
         AssertDataLine(models[0]);
         AssertEmptyLine(models[1]);
@@ -73,6 +85,7 @@ public class TsvReaderTests
     public void ShouldReadMappedByProperties()
     {
         var tsv = new StringBuilder();
+        tsv.AppendLine("#comment");
         tsv.AppendLine(string.Join('\t', "StringValue", "DateValue", "EnumValue", "ArrayValue"));
         tsv.AppendLine(string.Join('\t', "string", "2022-01-10T10:00:00", "A", "[1, 2, 3]"));
 
@@ -102,6 +115,7 @@ public class TsvReaderTests
     public void ShouldReadMappedByPropertiesWithoutHeader()
     {
         var tsv = new StringBuilder();
+        tsv.AppendLine("#comment");
         tsv.AppendLine(string.Join('\t', "string", "2022-01-10T10:00:00", "A", "[1, 2, 3]"));
 
         var arrayConverter = new ArrayConverter();
@@ -130,6 +144,7 @@ public class TsvReaderTests
     public void ShouldReadMappedByNames()
     {
         var tsv = new StringBuilder();
+        tsv.AppendLine("#comment");
         tsv.AppendLine(string.Join('\t', "String_Value", "Date_Value", "Enum_Value", "Array_Value"));
         tsv.AppendLine(string.Join('\t', "string", "2022-01-10T10:00:00", "A", "[1, 2, 3]"));
 
@@ -159,6 +174,7 @@ public class TsvReaderTests
     public void ShouldReadMixedMapping()
     {
         var tsv = new StringBuilder();
+        tsv.AppendLine("#comment");
         tsv.AppendLine(string.Join('\t', "String_Value", "CharValue", "BoolValue", "Date_Value", "ByteValue", "UShortValue", "UIntValue", "ULongValue", "SByteValue", "ShortValue", "IntValue", "LongValue", "DecimalValue", "DoubleValue", "FloatValue", "Enum_Value", "ArrayValue"));
         tsv.AppendLine(string.Join('\t', "string", "c", "true", "2022-01-10 10:00:00", "255", "65535", "65536", "65537", "-128", "-32768", "-32769", "-32770", "65540", "1.79E+308", "3.4028E+38", "A", "[1, 2, 3]"));
 
@@ -194,7 +210,7 @@ public class TsvReaderTests
     }
 
 
-    private void AssertDataLine(TestModel line)
+    private static void AssertDataLine(TestModel line)
     {
         Assert.AreEqual("string", line.StringValue);
         Assert.AreEqual('c', line.CharValue);
@@ -216,7 +232,7 @@ public class TsvReaderTests
         Assert.AreEqual(TestEnum.A, line.EnumValue);
     }
 
-    private void AssertEmptyLine(TestModel line)
+    private static void AssertEmptyLine(TestModel line)
     {
         Assert.AreEqual(null, line.StringValue);
         Assert.AreEqual(null, line.CharValue);
@@ -238,7 +254,7 @@ public class TsvReaderTests
         Assert.AreEqual(null, line.EnumValue);
     }
 
-    private void AssertArray<T>(T[] expected, T[] actual)
+    private static void AssertArray<T>(T[] expected, T[] actual)
     {
         Assert.AreEqual(expected.Length, actual.Length);
 
@@ -248,7 +264,7 @@ public class TsvReaderTests
         }
     }
 
-    private Stream PrepareStream(string content)
+    private static Stream PrepareStream(string content)
     {
         var stream = new MemoryStream();
         
